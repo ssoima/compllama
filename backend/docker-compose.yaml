@@ -5,7 +5,7 @@ services:
     image: chromadb/chroma:latest  # Uses the chromadb/chroma image from Docker Hub
     container_name: chromadb
     ports:
-      - "8000:8000"  # Expose the port ChromaDB runs on, adjust if needed
+      - "8001:8000"  # Expose the port ChromaDB runs on, adjust if needed
     environment:
       - CHROMA_DB_PATH=/data  # Specify data path within the container
       - CHROMA_LOG_LEVEL=INFO # Set log level, can be adjusted as needed

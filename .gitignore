@@ -1,0 +1,60 @@
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+*.log
+*.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build artifacts
+build/
+dist/
+.cache/
+yarn-error.log
+pnpm-lock.yaml
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.sublime-workspace
+
+# FastAPI / Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+*.eggs/
+*.coverage
+.coverage.*
+.cache
+env/
+venv/
+.venv/
+*.env
+*.env.*
+
+# Python packaging
+*.manifest
+*.lock
+pip-log.txt
+pip-delete-this-directory.txt
+poetry.lock
+
+# macOS
+.DS_Store
+
+# Logs and Debugging
+*.log
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~

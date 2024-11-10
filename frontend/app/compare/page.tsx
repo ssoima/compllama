@@ -235,143 +235,143 @@ export default function Home() {
 
   return (
       <div className="flex">
-      <Navbar />
+        <Navbar />
 
-      <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
+        <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
 
-        <div className="flex gap-4 mb-4">
-          {/* State Dropdown */}
-          <div className="relative">
-            <select
-                value={selectedState}
-                onChange={handleStateChange}
-                className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {states.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-              ))}
-            </select>
+          <div className="flex gap-4 mb-4">
+            {/* State Dropdown */}
+            <div className="relative">
+              <select
+                  value={selectedState}
+                  onChange={handleStateChange}
+                  className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {states.map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                ))}
+              </select>
+            </div>
+
+            {/* City Dropdown */}
+            <div className="relative">
+              <select
+                  value={selectedCity}
+                  onChange={handleCityChange}
+                  className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {/* Check if cities[selectedState] exists before mapping */}
+                {cities[selectedState]?.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                ))}
+              </select>
+            </div>
           </div>
+          <ChatMessageList ref={messagesRef}>
+            {messages.length === 0 && (
+                <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
+                  <h1 className="font-bold">Welcome to the CompLlama</h1>
+                  <p className="text-muted-foreground text-sm">
+                    A compliance app for construction companies expanding across California that instantly confirms if projects meet local building codes and highlights differences across city regulations, allowing quick adaptation to unique requirements in each area.
+                  </p>
+                </div>
+            )}
 
-          {/* City Dropdown */}
-          <div className="relative">
-            <select
-                value={selectedCity}
-                onChange={handleCityChange}
-                className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {/* Check if cities[selectedState] exists before mapping */}
-              {cities[selectedState]?.map((city) => (
-                  <option key={city} value={city}>
-                    {city}
-                  </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      <ChatMessageList ref={messagesRef}>
-        {messages.length === 0 && (
-          <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
-            <h1 className="font-bold">Welcome to the CompLlama</h1>
-            <p className="text-muted-foreground text-sm">
-              A compliance app for construction companies expanding across California that instantly confirms if projects meet local building codes and highlights differences across city regulations, allowing quick adaptation to unique requirements in each area.
-            </p>
-          </div>
-        )}
-
-        {messages.map((message, index) => (
-          <ChatBubble
-            key={index}
-            variant={message.role == "user" ? "sent" : "received"}
-          >
-            <ChatBubbleAvatar
-              src=""
-              fallback={message.role == "user" ? "👨🏽" : "🤖"}
-            />
-            <ChatBubbleMessage>
-              {message.content.split("```").map((part: string, partIndex: number) => {
-                if (partIndex % 2 === 0) {
-                  return (
-                    <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
-                      {part}
-                    </Markdown>
-                  );
-                } else {
-                  return (
-                    <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
+            {messages.map((message, index) => (
+                <ChatBubble
+                    key={index}
+                    variant={message.role == "user" ? "sent" : "received"}
+                >
+                  <ChatBubbleAvatar
+                      src=""
+                      fallback={message.role == "user" ? "👨🏽" : "🤖"}
+                  />
+                  <ChatBubbleMessage>
+                    {message.content.split("```").map((part: string, partIndex: number) => {
+                      if (partIndex % 2 === 0) {
+                        return (
+                            <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
+                              {part}
+                            </Markdown>
+                        );
+                      } else {
+                        return (
+                            <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
                       <CodeDisplayBlock code={part} lang="" />
                     </pre>
-                  );
-                }
-              })}
+                        );
+                      }
+                    })}
 
-            {message.role === "assistant" && (
-              <div className="mt-2 flex flex-col gap-1">
-                {!isGenerating && message.sources?.map((source, sourceIndex) => (
-                  <div key={sourceIndex} className="flex items-center gap-2">
-                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 underline"
-                    >
-                      {source.label}
-                    </a>
-                  </div>
-                ))}
-              </div>
+                    {message.role === "assistant" && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                              <div key={sourceIndex} className="flex items-center gap-2">
+                                <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                                <a
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 underline"
+                                >
+                                  {source.label}
+                                </a>
+                              </div>
+                          ))}
+                        </div>
+                    )}
+                  </ChatBubbleMessage>
+                </ChatBubble>
+            ))}
+
+            {isGenerating && (
+                <ChatBubble variant="received">
+                  <ChatBubbleAvatar src="" fallback="🤖" />
+                  <ChatBubbleMessage isLoading />
+                </ChatBubble>
             )}
-            </ChatBubbleMessage>
-          </ChatBubble>
-        ))}
+          </ChatMessageList>
+          <div className="w-full px-4">
+            <form
+                ref={formRef}
+                onSubmit={onSubmit}
+                className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
+            >
+              <ChatInput
+                  value={input}
+                  onKeyDown={onKeyDown}
+                  onChange={handleInputChange}
+                  placeholder="Type your message here..."
+                  className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
+              />
+              <div className="flex items-center p-3 pt-0">
+                <Button variant="ghost" size="icon">
+                  <Paperclip className="size-4" />
+                  <span className="sr-only">Attach file</span>
+                </Button>
 
-        {isGenerating && (
-          <ChatBubble variant="received">
-            <ChatBubbleAvatar src="" fallback="🤖" />
-            <ChatBubbleMessage isLoading />
-          </ChatBubble>
-        )}
-      </ChatMessageList>
-      <div className="w-full px-4">
-        <form
-          ref={formRef}
-          onSubmit={onSubmit}
-          className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
-        >
-          <ChatInput
-            value={input}
-            onKeyDown={onKeyDown}
-            onChange={handleInputChange}
-            placeholder="Type your message here..."
-            className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
-          />
-          <div className="flex items-center p-3 pt-0">
-            <Button variant="ghost" size="icon">
-              <Paperclip className="size-4" />
-              <span className="sr-only">Attach file</span>
-            </Button>
+                <Button variant="ghost" size="icon">
+                  <Mic className="size-4" />
+                  <span className="sr-only">Use Microphone</span>
+                </Button>
 
-            <Button variant="ghost" size="icon">
-              <Mic className="size-4" />
-              <span className="sr-only">Use Microphone</span>
-            </Button>
-
-              <Button
-                  disabled={!input || isLoading}
-                  type="submit"
-                  size="sm"
-                  className="ml-auto gap-1.5"
-              >
+                <Button
+                    disabled={!input || isLoading}
+                    type="submit"
+                    size="sm"
+                    className="ml-auto gap-1.5"
+                >
                   Send Message
                   <CornerDownLeft className="size-3.5" />
-              </Button>
+                </Button>
+              </div>
+            </form>
           </div>
-        </form>
-      </div>
-      </main>
+        </main>
       </div>
   );
 }

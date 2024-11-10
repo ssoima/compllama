@@ -9,6 +9,7 @@ import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Button } from "@/components/ui/button";
 import {
+  CopyIcon,
   CornerDownLeft,
   Mic,
   Paperclip,
@@ -18,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeDisplayBlock from "@/components/code-display-block";
+import Navbar from "@/components/ui/navbar";
 
 const SAMPLE_SOURCES = [
   { url: "https://example.com/doc1", label: "Building Code 2024" },
@@ -32,10 +34,9 @@ type Message = {
   role: "user" | "assistant"; // Specifies who sent the message
   content: string; // The actual text of the message
   timestamp?: Date; // Optional timestamp for when the message was sent
-  sources?: { url: string; label: string }[]; // List of sources with labels
 };
 
-const states = ["California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "North Carolina", "Michigan", "Virginia"];
+const states = ["California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "Michigan", "Virginia"];
 
 const cities = {
   California: ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento"],
@@ -45,7 +46,6 @@ const cities = {
   Pennsylvania: ["Philadelphia", "Pittsburgh", "Allentown", "Erie", "Reading"],
   Ohio: ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
   Georgia: ["Atlanta", "Augusta", "Savannah", "Athens", "Macon"],
-  NorthCarolina: ["Charlotte", "Raleigh", "Greensboro", "Durham", "Winston-Salem"],
   Michigan: ["Detroit", "Grand Rapids", "Warren", "Sterling Heights", "Ann Arbor"],
   Virginia: ["Virginia Beach", "Norfolk", "Chesapeake", "Richmond", "Newport News"]
 };
@@ -99,13 +99,20 @@ export default function Home() {
 
   const requestChatCompletion = async () => {
     // Initialize an empty assistant message to render streaming response
-    const assistantMessage: Message = {
+    const assistantMessage: {
+      role: string;
+      sources: ({ label: string; url: string })[];
+      id: string;
+      content: string;
+      timestamp: Date
+    } = {
       id: String(Date.now() + 1),
       role: "assistant",
       content: "",
       timestamp: new Date(),
       sources: getRandomSources(), // Add this line
     };
+
 
     try {
       // Stream response from the backend on port 8000
@@ -227,7 +234,10 @@ export default function Home() {
   };
 
   return (
-    <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
+      <div className="flex">
+      <Navbar />
+      <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
+
         <div className="flex gap-4 mb-4">
           {/* State Dropdown */}
           <div className="relative">
@@ -348,18 +358,19 @@ export default function Home() {
               <span className="sr-only">Use Microphone</span>
             </Button>
 
-            <Button
-              disabled={!input || isLoading}
-              type="submit"
-              size="sm"
-              className="ml-auto gap-1.5"
-            >
-              Send Message
-              <CornerDownLeft className="size-3.5" />
-            </Button>
+              <Button
+                  disabled={!input || isLoading}
+                  type="submit"
+                  size="sm"
+                  className="ml-auto gap-1.5"
+              >
+                  Send Message
+                  <CornerDownLeft className="size-3.5" />
+              </Button>
           </div>
         </form>
       </div>
-    </main>
+      </main>
+      </div>
   );
 }

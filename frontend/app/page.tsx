@@ -70,52 +70,68 @@ export default function Home() {
       content: "",
       timestamp: new Date(),
     };
-    setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+
     try {
-      // Stream response from the backend on port 3020
-      const response = await fetch("http://localhost:8000/chat-stream", {
+      // Stream response from the backend on port 8000
+      const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
-        mode: 'no-cors',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
-      console.log("here I am")
-      //if (!response.body) throw new Error("No response body");
-      console.log("response.body: ",response.body)
+
+      if (!response.body) throw new Error("No response body");
 
       // ReadableStream to handle streaming response
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
 
       let newContent = "";
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
 
       // Process each chunk from the response
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        newContent += decoder.decode(value, { stream: true });
+        // Decode and parse each chunk of the streamed response
+        const chunk = decoder.decode(value, { stream: true });
+        try {
+          // Split and parse individual JSON messages from the chunk
+          const lines = chunk.split("\n").filter(line => line.trim() !== "");
+          lines.forEach(line => {
+            const parsed = JSON.parse(line);
+            if (parsed.content) {
+              if (parsed.content !== "Assistant> ") {
+                newContent += parsed.content;
+              }
 
-        // Update assistant message content incrementally
-        setMessages((prevMessages) => {
-          const updatedMessages = [...prevMessages];
-          const lastMessageIndex = updatedMessages.length - 1;
-          if (updatedMessages[lastMessageIndex].role === "assistant") {
-            updatedMessages[lastMessageIndex] = {
-              ...updatedMessages[lastMessageIndex],
-              content: newContent,
-            };
-          }
-          return updatedMessages;
-        });
+              // Update assistant message content incrementally
+              setMessages((prevMessages) => {
+                const updatedMessages = [...prevMessages];
+                const lastMessageIndex = updatedMessages.length - 1;
+                if (updatedMessages[lastMessageIndex].role === "assistant") {
+                  updatedMessages[lastMessageIndex] = {
+                    ...updatedMessages[lastMessageIndex],
+                    content: newContent,
+                  };
+                }
+                return updatedMessages;
+              });
+            }
+          });
+        } catch (err) {
+          assistantMessage.content = "An error occurred while processing the response.";
+          setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+
+          console.error("Failed to parse JSON chunk:", err);
+        }
       }
     } catch (error) {
       console.error("Error during streaming:", error);
     } finally {
       setIsGenerating(false);
-      setIsLoading(false);
     }
-  }
+  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -134,8 +150,8 @@ export default function Home() {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInput(""); // Clear the input field
     setIsLoading(true);
-    setIsLoading(false);
     await requestChatCompletion()
+    setIsLoading(false);
 
   };
 

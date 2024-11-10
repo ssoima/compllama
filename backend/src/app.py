@@ -45,7 +45,7 @@ async def chat(request: ChatRequest):
     # Use the provided LlamaStack client code snippet
     response = client.inference.chat_completion(
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "system", "content": "You are a helpful lady. Answer the asked question as faithfully as possible."},
             {"role": "user", "content": user_message}
         ],
         model="Llama3.2-90B-Vision-Instruct",

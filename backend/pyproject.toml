@@ -3,7 +3,7 @@ name = "streamlit_fastapi_togetherai_llama"
 version = "0.0.1"
 description = "A simple example showcasing streamlit, fastapi, togetherai and llamaindex"
 authors = [
-    "Restack Team <service@restack.io>",
+    "Sergiu Soima, Liana Soima, Stefania Mocan",
 ]
 readme = "README.md"
 packages = [{include = "src"}]
@@ -20,6 +20,8 @@ python-dotenv = "0.19"
 streamlit = "^1.40.0"
 requests = "^2.32.3"
 chromadb = "^0.5.18"
+llama-stack = "^0.0.52"
+llama-stack-client = "^0.0.50"
 
 [build-system]
 requires = ["poetry-core"]

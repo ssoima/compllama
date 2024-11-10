@@ -3,7 +3,7 @@ from src.client import client
 from src.functions.llm.chat import llm_chat
 from src.functions.hn.search import hn_search
 from src.functions.llm.parse_municode_entry import parse_municode_entry
-from src.workflows import municode_parser
+from src.workflows.municode_parser import municode_parser
 from src.workflows.workflow import hn_workflow
 from src.functions.crawl.website import crawl_website
 from restack_ai.restack import ServiceOptions

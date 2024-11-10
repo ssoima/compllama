@@ -252,7 +252,7 @@ export default function Home() {
         <Navbar />
 
         <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
-          <div className="flex-grow flex">
+          <div className="flex-grow flex w-full">
             {/* Left Side Chat Messages */}
             <div className="flex-1 p-4 overflow-hidden">
               <div className="flex gap-4 mb-4">
@@ -306,6 +306,24 @@ export default function Home() {
                             );
                           }
                         })}
+
+                        {message.role === "assistant" && (
+                            <div className="mt-2 flex flex-col gap-1">
+                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                                  <div key={sourceIndex} className="flex items-center gap-2">
+                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                                    <a
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 underline"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </div>
+                              ))}
+                            </div>
+                        )}
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}
@@ -374,6 +392,23 @@ export default function Home() {
                             );
                           }
                         })}
+                        {message.role === "assistant" && (
+                            <div className="mt-2 flex flex-col gap-1">
+                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                                  <div key={sourceIndex} className="flex items-center gap-2">
+                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                                    <a
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 underline"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </div>
+                              ))}
+                            </div>
+                        )}
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}

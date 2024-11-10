@@ -48,7 +48,7 @@ async def chat(request: ChatRequest):
             {"role": "system", "content": "You are a helpful lady. Answer the asked question as faithfully as possible."},
             {"role": "user", "content": user_message}
         ],
-        model="Llama3.2-90B-Vision-Instruct",
+        model="Llama3.1-405B-Instruct",
         stream=True
     )
     # Define an async generator to stream each log message
@@ -59,6 +59,32 @@ async def chat(request: ChatRequest):
 
     # Return the StreamingResponse using the async generator
     return StreamingResponse(event_generator(), media_type="application/json")
+
+
+@app.post("/api/run_parser")
+async def run_parser():
+    try:
+        client = Restack()
+        workflow_id = f"{int(time.time() * 1000)}-llm_complete_workflow"
+
+        runId = await client.schedule_workflow(
+            workflow_name="municode_parser",
+            workflow_id=workflow_id,
+        )
+        print("Scheduled workflow", runId)
+
+        result = await client.get_workflow_result(
+            workflow_id=workflow_id,
+            run_id=runId
+        )
+
+        return {
+            "result": result,
+            "workflow_id": workflow_id,
+            "run_id": runId
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/api/schedule")

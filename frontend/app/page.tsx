@@ -62,6 +62,61 @@ export default function Home() {
     setInput(e.target.value);
   };
 
+  const requestChatCompletion = async () => {
+    // Initialize an empty assistant message to render streaming response
+    const assistantMessage: Message = {
+      id: String(Date.now() + 1),
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+    };
+    setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+    try {
+      // Stream response from the backend on port 3020
+      const response = await fetch("http://localhost:8000/chat-stream", {
+        method: "POST",
+        mode: 'no-cors',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+      console.log("here I am")
+      //if (!response.body) throw new Error("No response body");
+      console.log("response.body: ",response.body)
+
+      // ReadableStream to handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let newContent = "";
+
+      // Process each chunk from the response
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        newContent += decoder.decode(value, { stream: true });
+
+        // Update assistant message content incrementally
+        setMessages((prevMessages) => {
+          const updatedMessages = [...prevMessages];
+          const lastMessageIndex = updatedMessages.length - 1;
+          if (updatedMessages[lastMessageIndex].role === "assistant") {
+            updatedMessages[lastMessageIndex] = {
+              ...updatedMessages[lastMessageIndex],
+              content: newContent,
+            };
+          }
+          return updatedMessages;
+        });
+      }
+    } catch (error) {
+      console.error("Error during streaming:", error);
+    } finally {
+      setIsGenerating(false);
+      setIsLoading(false);
+    }
+  }
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsGenerating(true);
@@ -79,8 +134,9 @@ export default function Home() {
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInput(""); // Clear the input field
     setIsLoading(true);
-    //add logic
     setIsLoading(false);
+    await requestChatCompletion()
+
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -121,7 +177,7 @@ export default function Home() {
           <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
             <h1 className="font-bold">Welcome to the CompLlama</h1>
             <p className="text-muted-foreground text-sm">
-              Demo text
+              A compliance app for construction companies expanding across California that instantly confirms if projects meet local building codes and highlights differences across city regulations, allowing quick adaptation to unique requirements in each area.
             </p>
           </div>
         )}

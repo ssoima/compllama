@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeDisplayBlock from "@/components/code-display-block";
+import Navbar from "@/components/ui/navbar";
 
 const SAMPLE_SOURCES = [
   { url: "https://example.com/doc1", label: "Building Code 2024" },
@@ -98,13 +99,20 @@ export default function Home() {
 
   const requestChatCompletion = async () => {
     // Initialize an empty assistant message to render streaming response
-    const assistantMessage: Message = {
+    const assistantMessage: {
+      role: string;
+      sources: ({ label: string; url: string })[];
+      id: string;
+      content: string;
+      timestamp: Date
+    } = {
       id: String(Date.now() + 1),
       role: "assistant",
       content: "",
       timestamp: new Date(),
       sources: getRandomSources(), // Add this line
     };
+
 
     try {
       // Stream response from the backend on port 8000
@@ -228,6 +236,7 @@ export default function Home() {
   return (
       <div className="flex">
       <Navbar />
+
       <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
 
         <div className="flex gap-4 mb-4">

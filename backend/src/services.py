@@ -3,16 +3,18 @@ from src.client import client
 from src.functions.llm.chat import llm_chat
 from src.functions.hn.search import hn_search
 from src.functions.llm.parse_municode_entry import parse_municode_entry
+from src.workflows.campbellca_parser import campbellca_parser
 from src.workflows.municode_parser import municode_parser
 from src.workflows.workflow import hn_workflow
-from src.functions.crawl.website import crawl_website
+from src.functions.crawl.crawl_campbellca import crawl_campbellca
+from src.functions.crawl.store_campbell_to_db import store_campbellca_to_db
 from restack_ai.restack import ServiceOptions
 
 async def main():
     await asyncio.gather(
         client.start_service(
-            workflows=[hn_workflow, municode_parser],
-            functions=[hn_search, crawl_website, parse_municode_entry],
+            workflows=[hn_workflow, municode_parser, campbellca_parser],
+            functions=[hn_search, parse_municode_entry, crawl_campbellca, store_campbellca_to_db],
         ),
         client.start_service(
             functions=[llm_chat],

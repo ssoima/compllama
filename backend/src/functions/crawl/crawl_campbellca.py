@@ -1,17 +1,15 @@
-from restack_ai.function import function, log
-import requests
+import asyncio
+
 from bs4 import BeautifulSoup
-from restack_ai.function import function, log
-import requests
-import pdfplumber
 from restack_ai.function import function, log
 import requests
 import pdfplumber
 import json
 
-@function.defn(name="crawl_website")
-async def crawl_website(url):
+@function.defn(name="crawl_campbellca")
+async def crawl_campbellca():
     try:
+        url = 'https://www.campbellca.gov/DocumentCenter/View/6775/Smoke-Alarms-and-Carbon-Monoxide-Alarms--Plan-Submittal'
         # Send a GET request to the URL
         response = requests.get(url)
         response.raise_for_status()  # Raise an error for bad responses
@@ -24,7 +22,7 @@ async def crawl_website(url):
             "state": "CA",
             "city": "Campbell",
             "subtitle": "Adoption.",
-            "url": "https://www.campbellca.gov/DocumentCenter/View/6775/Smoke-Alarms-and-Carbon-Monoxide-Alarms--Plan-Submittal"
+            "url": url
         }
 
         # Check if the content is a PDF
@@ -44,7 +42,7 @@ async def crawl_website(url):
                 "content": content
             }
 
-            log.info("crawl_website", extra={"output": output})
+            log.info("crawl_campbellca", extra={"output": output})
             return json.dumps(output)  # Convert the dictionary to a JSON string
 
         else:
@@ -58,14 +56,12 @@ async def crawl_website(url):
                 "content": content
             }
 
-            log.info("crawl_website", extra={"output": output})
-            return json.dumps(output)
+            log.info("crawl_campbellca", extra={"output": output})
+            return output
 
     except requests.exceptions.RequestException as e:
-        log.error("crawl_website function failed", error=e)
+        log.error("crawl_campbellca function failed", error=e)
         raise e
     except Exception as e:
         log.error("An error occurred while processing the PDF", error=e)
         raise e
-
-

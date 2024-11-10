@@ -86,6 +86,32 @@ async def run_parser():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/run_campbellca_parser")
+async def run_parser():
+    try:
+        client = Restack()
+        workflow_id = f"{int(time.time() * 1000)}-llm_complete_workflow"
+
+        runId = await client.schedule_workflow(
+            workflow_name="campbellca_parser",
+            workflow_id=workflow_id,
+        )
+        print("Scheduled workflow", runId)
+
+        result = await client.get_workflow_result(
+            workflow_id=workflow_id,
+            run_id=runId
+        )
+
+        return {
+            "result": result,
+            "workflow_id": workflow_id,
+            "run_id": runId
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 @app.post("/api/schedule")
 async def schedule_workflow(request: QueryRequest):

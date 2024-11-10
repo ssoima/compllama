@@ -4,7 +4,6 @@ from restack_ai.workflow import workflow, import_functions, log
 with import_functions():
     from src.functions.hn.search import hn_search
     from src.functions.hn.schema import HnSearchInput
-    from src.functions.crawl.website import crawl_website
     from src.functions.llm.chat import llm_chat, FunctionInputParams
     
 
@@ -21,10 +20,7 @@ class hn_workflow:
         crawled_contents = []
         for url in urls:  # Use the extracted URLs
             log.info("hn_result", extra={"url": url})
-            if url:
-                content = await workflow.step(crawl_website, url, start_to_close_timeout=timedelta(seconds=30))
-                crawled_contents.append(content)
-        
+
         summaries = []
         for content in crawled_contents:
             system_prompt = f"Provide a summary of the website for project found on Hacker news"

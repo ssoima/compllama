@@ -236,7 +236,6 @@ export default function Home() {
   return (
       <div className="flex">
       <Navbar />
-
       <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
 
         <div className="flex gap-4 mb-4">

@@ -57,8 +57,14 @@ export default function Home() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [selectedState, setSelectedState] = useState("California"); // Default state
-  const [selectedCity, setSelectedCity] = useState("Los Angeles"); // Default city
+  // State for the left panel
+  const [leftSelectedState, setLeftSelectedState] = useState("California");
+  const [leftSelectedCity, setLeftSelectedCity] = useState("Los Angeles");
+  const [leftMessages, setLeftMessages] = useState<Message[]>([]);
+
+  // State for the right panel
+  const [rightSelectedState, setRightSelectedState] = useState("California");
+  const [rightSelectedCity, setRightSelectedCity] = useState("Los Angeles");
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -68,19 +74,27 @@ export default function Home() {
     }
   }, [messages]);
 
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  // Handlers for the left panel
+  const handleLeftStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const state = e.target.value;
-    setSelectedState(state);
-
-    // Set the first city only if cities[state] is defined
-    if (cities[state]) {
-      setSelectedCity(cities[state][0]);
-    } else {
-      setSelectedCity("");
-    }
+    setLeftSelectedState(state);
+    setLeftSelectedCity(cities[state] ? cities[state][0] : "");
   };
-  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCity(e.target.value);
+
+  const handleLeftCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLeftSelectedCity(e.target.value);
+  };
+
+
+  // Handlers for the right panel
+  const handleRightStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const state = e.target.value;
+    setRightSelectedState(state);
+    setRightSelectedCity(cities[state] ? cities[state][0] : "");
+  };
+
+  const handleRightCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setRightSelectedCity(e.target.value);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -238,103 +252,177 @@ export default function Home() {
         <Navbar />
 
         <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
+          <div className="flex-grow flex w-full">
+            {/* Left Side Chat Messages */}
+            <div className="flex-1 p-4 overflow-hidden">
+              <div className="flex gap-4 mb-4">
+                {/* State Dropdown */}
+                <select
+                    value={leftSelectedState}
+                    onChange={handleLeftStateChange}
+                    className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {states.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                  ))}
+                </select>
 
-          <div className="flex gap-4 mb-4">
-            {/* State Dropdown */}
-            <div className="relative">
-              <select
-                  value={selectedState}
-                  onChange={handleStateChange}
-                  className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                {states.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
+                {/* City Dropdown */}
+                <select
+                    value={leftSelectedCity}
+                    onChange={handleLeftCityChange}
+                    className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {cities[leftSelectedState]?.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                  ))}
+                </select>
+              </div>
+
+              <ChatMessageList ref={messagesRef} className="h-full overflow-y-auto">
+                {messages.map((message, index) => (
+                    <ChatBubble
+                        key={index}
+                        variant={message.role === "user" ? "sent" : "received"}
+                    >
+                      <ChatBubbleAvatar src="" fallback={message.role === "user" ? "👨🏽" : "🤖"} />
+                      <ChatBubbleMessage>
+                        {message.content.split("```").map((part, partIndex) => {
+                          if (partIndex % 2 === 0) {
+                            return (
+                                <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
+                                  {part}
+                                </Markdown>
+                            );
+                          } else {
+                            return (
+                                <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
+                          <CodeDisplayBlock code={part} lang="" />
+                        </pre>
+                            );
+                          }
+                        })}
+
+                        {message.role === "assistant" && (
+                            <div className="mt-2 flex flex-col gap-1">
+                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                                  <div key={sourceIndex} className="flex items-center gap-2">
+                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                                    <a
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 underline"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </div>
+                              ))}
+                            </div>
+                        )}
+                      </ChatBubbleMessage>
+                    </ChatBubble>
                 ))}
-              </select>
+                {isGenerating && (
+                    <ChatBubble variant="received">
+                      <ChatBubbleAvatar src="" fallback="🤖" />
+                      <ChatBubbleMessage isLoading />
+                    </ChatBubble>
+                )}
+              </ChatMessageList>
             </div>
 
-            {/* City Dropdown */}
-            <div className="relative">
-              <select
-                  value={selectedCity}
-                  onChange={handleCityChange}
-                  className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                {/* Check if cities[selectedState] exists before mapping */}
-                {cities[selectedState]?.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
+            {/* Divider */}
+            <div className="w-0.5 bg-black"></div>
+
+            {/* Right Side Chat Messages (Duplicate View) */}
+            <div className="flex-1 p-4 overflow-hidden">
+              <div className="flex gap-4 mb-4">
+                {/* State Dropdown */}
+                <select
+                    value={rightSelectedState}
+                    onChange={handleRightStateChange}
+                    className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {states.map((state) => (
+                      <option key={state} value={state}>
+                        {state}
+                      </option>
+                  ))}
+                </select>
+
+                {/* City Dropdown */}
+                <select
+                    value={rightSelectedCity}
+                    onChange={handleRightCityChange}
+                    className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {cities[rightSelectedState]?.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                  ))}
+                </select>
+              </div>
+
+              <ChatMessageList ref={messagesRef} className="h-full overflow-y-auto">
+                {messages.map((message, index) => (
+                    <ChatBubble
+                        key={`duplicate-${index}`}
+                        variant={message.role === "user" ? "sent" : "received"}
+                    >
+                      <ChatBubbleAvatar src="" fallback={message.role === "user" ? "👨🏽" : "🤖"} />
+                      <ChatBubbleMessage>
+                        {message.content.split("```").map((part, partIndex) => {
+                          if (partIndex % 2 === 0) {
+                            return (
+                                <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
+                                  {part}
+                                </Markdown>
+                            );
+                          } else {
+                            return (
+                                <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
+                          <CodeDisplayBlock code={part} lang="" />
+                        </pre>
+                            );
+                          }
+                        })}
+                        {message.role === "assistant" && (
+                            <div className="mt-2 flex flex-col gap-1">
+                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                                  <div key={sourceIndex} className="flex items-center gap-2">
+                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                                    <a
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 underline"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </div>
+                              ))}
+                            </div>
+                        )}
+                      </ChatBubbleMessage>
+                    </ChatBubble>
                 ))}
-              </select>
+                {isGenerating && (
+                    <ChatBubble variant="received">
+                      <ChatBubbleAvatar src="" fallback="🤖" />
+                      <ChatBubbleMessage isLoading />
+                    </ChatBubble>
+                )}
+              </ChatMessageList>
             </div>
           </div>
-          <ChatMessageList ref={messagesRef}>
-            {messages.length === 0 && (
-                <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
-                  <h1 className="font-bold">Welcome to the CompLlama</h1>
-                  <p className="text-muted-foreground text-sm">
-                    A compliance app for construction companies expanding across California that instantly confirms if projects meet local building codes and highlights differences across city regulations, allowing quick adaptation to unique requirements in each area.
-                  </p>
-                </div>
-            )}
 
-            {messages.map((message, index) => (
-                <ChatBubble
-                    key={index}
-                    variant={message.role == "user" ? "sent" : "received"}
-                >
-                  <ChatBubbleAvatar
-                      src=""
-                      fallback={message.role == "user" ? "👨🏽" : "🤖"}
-                  />
-                  <ChatBubbleMessage>
-                    {message.content.split("```").map((part: string, partIndex: number) => {
-                      if (partIndex % 2 === 0) {
-                        return (
-                            <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
-                              {part}
-                            </Markdown>
-                        );
-                      } else {
-                        return (
-                            <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
-                      <CodeDisplayBlock code={part} lang="" />
-                    </pre>
-                        );
-                      }
-                    })}
-
-                    {message.role === "assistant" && (
-                        <div className="mt-2 flex flex-col gap-1">
-                          {!isGenerating && message.sources?.map((source, sourceIndex) => (
-                              <div key={sourceIndex} className="flex items-center gap-2">
-                                <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
-                                <a
-                                    href={source.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 underline"
-                                >
-                                  {source.label}
-                                </a>
-                              </div>
-                          ))}
-                        </div>
-                    )}
-                  </ChatBubbleMessage>
-                </ChatBubble>
-            ))}
-
-            {isGenerating && (
-                <ChatBubble variant="received">
-                  <ChatBubbleAvatar src="" fallback="🤖" />
-                  <ChatBubbleMessage isLoading />
-                </ChatBubble>
-            )}
-          </ChatMessageList>
+          {/* Main Chat Input */}
           <div className="w-full px-4">
             <form
                 ref={formRef}
@@ -374,4 +462,5 @@ export default function Home() {
         </main>
       </div>
   );
+
 }

@@ -23,18 +23,18 @@ services:
       - chromadb_data:/data   # Mount a volume for persistent data storage
     networks:
       - compllama-network
-
-  chroma-ui:
-    image: ghcr.io/chroma-core/chroma-ui:main
-    environment:
-      - CHROMA_SERVER_HOST=chromadb
-      - CHROMA_SERVER_HTTP_PORT=8000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - chromadb
-    networks:
-      - compllama-network
+      
+  # chroma-ui:
+  #   image: ghcr.io/chroma-core/chroma-ui:main
+  #   environment:
+  #     - CHROMA_SERVER_HOST=chromadb
+  #     - CHROMA_SERVER_HTTP_PORT=8000
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - chromadb
+  #   networks:
+  #     - compllama-network
 
 networks:
   compllama-network:

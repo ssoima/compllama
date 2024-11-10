@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  restack:
+    image: ghcr.io/restackio/engine:main
+    container_name: restack-studio
+    ports:
+      - "5233:5233"
+      - "6233:6233"
+      - "7233:7233"
+    networks:
+      - compllama-network
+
   chromadb:
     image: chromadb/chroma:latest  # Uses the chromadb/chroma image from Docker Hub
     container_name: chromadb
@@ -11,6 +21,12 @@ services:
       - CHROMA_LOG_LEVEL=INFO # Set log level, can be adjusted as needed
     volumes:
       - chromadb_data:/data   # Mount a volume for persistent data storage
+    networks:
+      - compllama-network
+
+networks:
+  compllama-network:
+    driver: bridge
 
 volumes:
   chromadb_data:

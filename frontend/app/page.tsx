@@ -35,11 +35,30 @@ type Message = {
   sources?: { url: string; label: string }[]; // List of sources with labels
 };
 
+const states = ["California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "North Carolina", "Michigan", "Virginia"];
+
+const cities = {
+  California: ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento"],
+  Texas: ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"],
+  Florida: ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee"],
+  Illinois: ["Chicago", "Aurora", "Naperville", "Joliet", "Rockford"],
+  Pennsylvania: ["Philadelphia", "Pittsburgh", "Allentown", "Erie", "Reading"],
+  Ohio: ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
+  Georgia: ["Atlanta", "Augusta", "Savannah", "Athens", "Macon"],
+  NorthCarolina: ["Charlotte", "Raleigh", "Greensboro", "Durham", "Winston-Salem"],
+  Michigan: ["Detroit", "Grand Rapids", "Warren", "Sterling Heights", "Ann Arbor"],
+  Virginia: ["Virginia Beach", "Norfolk", "Chesapeake", "Richmond", "Newport News"]
+};
+
+
+
 export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedState, setSelectedState] = useState("California"); // Default state
+  const [selectedCity, setSelectedCity] = useState("Los Angeles"); // Default city
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -48,6 +67,21 @@ export default function Home() {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const state = e.target.value;
+    setSelectedState(state);
+
+    // Set the first city only if cities[state] is defined
+    if (cities[state]) {
+      setSelectedCity(cities[state][0]);
+    } else {
+      setSelectedCity("");
+    }
+  };
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCity(e.target.value);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -194,6 +228,38 @@ export default function Home() {
 
   return (
     <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
+        <div className="flex gap-4 mb-4">
+          {/* State Dropdown */}
+          <div className="relative">
+            <select
+                value={selectedState}
+                onChange={handleStateChange}
+                className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {states.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+              ))}
+            </select>
+          </div>
+
+          {/* City Dropdown */}
+          <div className="relative">
+            <select
+                value={selectedCity}
+                onChange={handleCityChange}
+                className="block w-[180px] border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {/* Check if cities[selectedState] exists before mapping */}
+              {cities[selectedState]?.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
+                  </option>
+              ))}
+            </select>
+          </div>
+        </div>
       <ChatMessageList ref={messagesRef}>
         {messages.length === 0 && (
           <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">

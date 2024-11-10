@@ -153,10 +153,11 @@ export default function Home() {
 
       //add here leftSelectedCity
       // Stream response from the backend on port 8000
+      const leftRegulatory = `Give me a regulatory city regulatory building construction for ${leftSelectedCity} for this question: ${input}`;
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: leftRegulatory }),
       });
 
       if (!response.body) throw new Error("No response body");
@@ -236,10 +237,11 @@ export default function Home() {
     try {
       // Stream response from the backend on port 8000
       //add here rightSelectedCity
+      const rightRegulatory = `Give me a regulatory city regulatory building construction for ${rightSelectedCity} for this question: ${input}`;
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: rightRegulatory }),
       });
 
       if (!response.body) throw new Error("No response body");

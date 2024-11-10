@@ -8,7 +8,7 @@ with import_functions():
 
 
 @workflow.defn(name="municode_parser")
-class munidode_parser:
+class municode_parser:
     @workflow.run
     async def run(self, input: dict):
         path = "../data/CaliforniaCityCACodeofOrdinancesEXPORT20220511.xlsx"

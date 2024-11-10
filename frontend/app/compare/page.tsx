@@ -309,6 +309,12 @@ export default function Home() {
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}
+                {isGenerating && (
+                    <ChatBubble variant="received">
+                      <ChatBubbleAvatar src="" fallback="🤖" />
+                      <ChatBubbleMessage isLoading />
+                    </ChatBubble>
+                )}
               </ChatMessageList>
             </div>
 
@@ -344,6 +350,7 @@ export default function Home() {
                   ))}
                 </select>
               </div>
+
               <ChatMessageList ref={messagesRef} className="h-full overflow-y-auto">
                 {messages.map((message, index) => (
                     <ChatBubble
@@ -370,6 +377,12 @@ export default function Home() {
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}
+                {isGenerating && (
+                    <ChatBubble variant="received">
+                      <ChatBubbleAvatar src="" fallback="🤖" />
+                      <ChatBubbleMessage isLoading />
+                    </ChatBubble>
+                )}
               </ChatMessageList>
             </div>
           </div>

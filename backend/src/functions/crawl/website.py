@@ -1,6 +1,13 @@
 from restack_ai.function import function, log
 import requests
 from bs4 import BeautifulSoup
+from restack_ai.function import function, log
+import requests
+import pdfplumber
+from restack_ai.function import function, log
+import requests
+import pdfplumber
+import json
 
 @function.defn(name="crawl_website")
 async def crawl_website(url):
@@ -9,17 +16,56 @@ async def crawl_website(url):
         response = requests.get(url)
         response.raise_for_status()  # Raise an error for bad responses
 
-        # Parse the content with BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Define metadata
+        metadata = {
+            "title": "Smoke and Carbon Monoxide Alarms",
+            "chapter": "1",
+            "section": "1",
+            "state": "CA",
+            "city": "Campbell",
+            "subtitle": "Adoption.",
+            "url": "https://www.campbellca.gov/DocumentCenter/View/6775/Smoke-Alarms-and-Carbon-Monoxide-Alarms--Plan-Submittal"
+        }
 
-        # Extract the text content from the page
-        content = soup.get_text()
+        # Check if the content is a PDF
+        if "application/pdf" in response.headers.get("Content-Type", ""):
+            with open("document.pdf", "wb") as f:
+                f.write(response.content)
+            
+            # Use pdfplumber to extract text from the PDF
+            content = ""
+            with pdfplumber.open("document.pdf") as pdf:
+                for page in pdf.pages:
+                    content += page.extract_text() + "\n"
 
-        log.info("crawl_website", extra={"content": content})
+            # Structure the output as a JSON object
+            output = {
+                "metadata": metadata,
+                "content": content
+            }
 
-        return content
+            log.info("crawl_website", extra={"output": output})
+            return json.dumps(output)  # Convert the dictionary to a JSON string
+
+        else:
+            # If it's not a PDF, use BeautifulSoup as a fallback
+            soup = BeautifulSoup(response.content, 'html.parser')
+            content = soup.get_text()
+
+            # Structure the output as a JSON object
+            output = {
+                "metadata": metadata,
+                "content": content
+            }
+
+            log.info("crawl_website", extra={"output": output})
+            return json.dumps(output)
 
     except requests.exceptions.RequestException as e:
-        # Handle any exceptions that occur during the request
         log.error("crawl_website function failed", error=e)
         raise e
+    except Exception as e:
+        log.error("An error occurred while processing the PDF", error=e)
+        raise e
+
+

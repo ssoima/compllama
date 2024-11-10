@@ -41,8 +41,95 @@ class OrdinanceDBWithTogether(ChromaDb):
             metadata={"hnsw:space": "cosine"}
         )
         self.name = collection_name
+    
+    def add_ordinances(self, ordinances: List[Dict]):
+        """Add multiple ordinances to the collection"""
+        documents = []
+        metadatas = []
+        ids = []
+        
+        for ordinance in ordinances:
+            # Format document as a searchable text
+            formatted = self._format_document(ordinance)
+            documents.append(formatted)
+            metadatas.append(ordinance['metadata'])  # Use original metadata
+            ids.append(str(uuid.uuid4()))
+        
+        # Add documents in batches
+        batch_size = 100
+        for i in range(0, len(documents), batch_size):
+            batch_end = min(i + batch_size, len(documents))
+            try:
+                self.collection.add(
+                    documents=documents[i:batch_end],
+                    metadatas=metadatas[i:batch_end],
+                    ids=ids[i:batch_end]
+                )
+                print(f"Added batch {i//batch_size + 1} of {(len(documents)-1)//batch_size + 1}")
+            except Exception as e:
+                print(f"Error adding batch {i//batch_size + 1}: {str(e)}")
+                raise
+    
+    def _format_document(self, ordinance: Dict) -> str:
+        """Format ordinance for search by combining metadata and content"""
+        metadata = ordinance['metadata']
+        formatted = f"""
+Title: {metadata.get('title', '')}
+Chapter: {metadata.get('chapter', '')}
+Section: {metadata.get('section', '')}
+Subtitle: {metadata.get('subtitle', '')}
 
-    # ... rest of the class implementation remains the same ...
+Content:
+{ordinance.get('content', '')}
+        """.strip()
+        return formatted
+    
+    def search_ordinances(
+        self,
+        query: str,
+        max_results: int = 5,
+        filter_conditions: Dict = None
+    ) -> List[Dict]:
+        """Search ordinances with optional filtering"""
+        where = filter_conditions if filter_conditions else {}
+        
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=max_results,
+            where=where
+        )
+        
+        formatted_results = []
+        for doc, metadata, distance, id_ in zip(
+            results['documents'][0],
+            results['metadatas'][0],
+            results['distances'][0],
+            results['ids'][0]
+        ):
+            formatted_results.append({
+                'document': doc,
+                'metadata': metadata,
+                'relevance_score': 1 - distance,
+                'id': id_
+            })
+            
+        return formatted_results
+
+    @classmethod
+    def from_excel(cls, excel_path: str, api_key: str, **kwargs):
+        """Create OrdinanceDB instance from Excel file"""
+        print(f"Parsing Excel file: {excel_path}")
+        ordinances = extract_ordinance_metadata(excel_path)
+        if not ordinances:
+            raise ValueError("Failed to parse ordinances from Excel file")
+        
+        print(f"Creating database instance...")
+        db = cls(api_key=api_key, **kwargs)
+        
+        print(f"Adding {len(ordinances)} ordinances to database...")
+        db.add_ordinances(ordinances)
+        
+        return db
 
 def main():
     EXCEL_PATH = "../data/CaliforniaCityCACodeofOrdinancesEXPORT20220511.xlsx"

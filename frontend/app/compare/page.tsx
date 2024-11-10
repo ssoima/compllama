@@ -8,13 +8,7 @@ import {
 import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Button } from "@/components/ui/button";
-import {
-  CopyIcon,
-  CornerDownLeft,
-  Mic,
-  Paperclip,
-  Pin,
-} from "lucide-react";
+import { CopyIcon, CornerDownLeft, Mic, Paperclip, Pin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -36,24 +30,51 @@ type Message = {
   timestamp?: Date; // Optional timestamp for when the message was sent
 };
 
-const states = ["California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "Michigan", "Virginia"];
+const states = [
+  "California",
+  "Texas",
+  "Florida",
+  "Illinois",
+  "Pennsylvania",
+  "Ohio",
+  "Georgia",
+  "Michigan",
+  "Virginia",
+];
 
 const cities = {
-  California: ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento"],
+  California: [
+    "Los Angeles",
+    "San Francisco",
+    "San Diego",
+    "San Jose",
+    "Sacramento",
+  ],
   Texas: ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"],
   Florida: ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee"],
   Illinois: ["Chicago", "Aurora", "Naperville", "Joliet", "Rockford"],
   Pennsylvania: ["Philadelphia", "Pittsburgh", "Allentown", "Erie", "Reading"],
   Ohio: ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
   Georgia: ["Atlanta", "Augusta", "Savannah", "Athens", "Macon"],
-  Michigan: ["Detroit", "Grand Rapids", "Warren", "Sterling Heights", "Ann Arbor"],
-  Virginia: ["Virginia Beach", "Norfolk", "Chesapeake", "Richmond", "Newport News"]
+  Michigan: [
+    "Detroit",
+    "Grand Rapids",
+    "Warren",
+    "Sterling Heights",
+    "Ann Arbor",
+  ],
+  Virginia: [
+    "Virginia Beach",
+    "Norfolk",
+    "Chesapeake",
+    "Richmond",
+    "Newport News",
+  ],
 };
 
-
-
 export default function Home() {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isRightGenerating, setIsRightGenerating] = useState(false);
+  const [isLeftGenerating, setIsLeftGenerating] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -65,6 +86,8 @@ export default function Home() {
   // State for the right panel
   const [rightSelectedState, setRightSelectedState] = useState("California");
   const [rightSelectedCity, setRightSelectedCity] = useState("Los Angeles");
+  const [rightMessages, setRightMessages] = useState<Message[]>([]);
+
   const messagesRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -84,7 +107,6 @@ export default function Home() {
   const handleLeftCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLeftSelectedCity(e.target.value);
   };
-
 
   // Handlers for the right panel
   const handleRightStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -111,14 +133,14 @@ export default function Home() {
     return shuffled.slice(0, numberOfSources);
   };
 
-  const requestChatCompletion = async () => {
+  const requestLeftSideChatCompletion = async () => {
     // Initialize an empty assistant message to render streaming response
     const assistantMessage: {
       role: string;
-      sources: ({ label: string; url: string })[];
+      sources: { label: string; url: string }[];
       id: string;
       content: string;
-      timestamp: Date
+      timestamp: Date;
     } = {
       id: String(Date.now() + 1),
       role: "assistant",
@@ -127,8 +149,9 @@ export default function Home() {
       sources: getRandomSources(), // Add this line
     };
 
-
     try {
+
+      //add here leftSelectedCity
       // Stream response from the backend on port 8000
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
@@ -143,7 +166,7 @@ export default function Home() {
       const decoder = new TextDecoder("utf-8");
 
       let newContent = "";
-      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+      setLeftMessages((prevMessages) => [...prevMessages, assistantMessage]);
 
       // Process each chunk from the response
       while (true) {
@@ -154,8 +177,8 @@ export default function Home() {
         const chunk = decoder.decode(value, { stream: true });
         try {
           // Split and parse individual JSON messages from the chunk
-          const lines = chunk.split("\n").filter(line => line.trim() !== "");
-          lines.forEach(line => {
+          const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+          lines.forEach((line) => {
             const parsed = JSON.parse(line);
             if (parsed.content) {
               if (parsed.content !== "Assistant> ") {
@@ -163,7 +186,7 @@ export default function Home() {
               }
 
               // Update assistant message content incrementally
-              setMessages((prevMessages) => {
+              setLeftMessages((prevMessages) => {
                 const updatedMessages = [...prevMessages];
                 const lastMessageIndex = updatedMessages.length - 1;
                 if (updatedMessages[lastMessageIndex].role === "assistant") {
@@ -177,8 +200,12 @@ export default function Home() {
             }
           });
         } catch (err) {
-          assistantMessage.content = "An error occurred while processing the response.";
-          setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+          assistantMessage.content =
+            "An error occurred while processing the response.";
+          setLeftMessages((prevMessages) => [
+            ...prevMessages,
+            assistantMessage,
+          ]);
 
           console.error("Failed to parse JSON chunk:", err);
         }
@@ -186,13 +213,97 @@ export default function Home() {
     } catch (error) {
       console.error("Error during streaming:", error);
     } finally {
-      setIsGenerating(false);
+      setIsLeftGenerating(false);
+    }
+  };
+
+  const requestRightSideChatCompletion = async () => {
+    // Initialize an empty assistant message to render streaming response
+    const assistantMessage: {
+      role: string;
+      sources: { label: string; url: string }[];
+      id: string;
+      content: string;
+      timestamp: Date;
+    } = {
+      id: String(Date.now() + 1),
+      role: "assistant",
+      content: "",
+      timestamp: new Date(),
+      sources: getRandomSources(), // Add this line
+    };
+
+    try {
+      // Stream response from the backend on port 8000
+      //add here rightSelectedCity
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
+      });
+
+      if (!response.body) throw new Error("No response body");
+
+      // ReadableStream to handle streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      let newContent = "";
+      setRightMessages((prevMessages) => [...prevMessages, assistantMessage]);
+
+      // Process each chunk from the response
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Decode and parse each chunk of the streamed response
+        const chunk = decoder.decode(value, { stream: true });
+        try {
+          // Split and parse individual JSON messages from the chunk
+          const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+          lines.forEach((line) => {
+            const parsed = JSON.parse(line);
+            if (parsed.content) {
+              if (parsed.content !== "Assistant> ") {
+                newContent += parsed.content;
+              }
+
+              // Update assistant message content incrementally
+              setRightMessages((prevMessages) => {
+                const updatedMessages = [...prevMessages];
+                const lastMessageIndex = updatedMessages.length - 1;
+                if (updatedMessages[lastMessageIndex].role === "assistant") {
+                  updatedMessages[lastMessageIndex] = {
+                    ...updatedMessages[lastMessageIndex],
+                    content: newContent,
+                  };
+                }
+                return updatedMessages;
+              });
+            }
+          });
+        } catch (err) {
+          assistantMessage.content =
+            "An error occurred while processing the response.";
+          setRightMessages((prevMessages) => [
+            ...prevMessages,
+            assistantMessage,
+          ]);
+
+          console.error("Failed to parse JSON chunk:", err);
+        }
+      }
+    } catch (error) {
+      console.error("Error during streaming:", error);
+    } finally {
+      setIsRightGenerating(false);
     }
   };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsGenerating(true);
+    setIsLeftGenerating(true);
+    setIsRightGenerating(true);
     if (!input.trim()) return; // Ensure input is not empty
 
     // Create new user message
@@ -204,19 +315,23 @@ export default function Home() {
     };
 
     // Add the new user message to messages
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setLeftMessages((prev) => [...prev, newMessage]);
+    setRightMessages((prev) => [...prev, newMessage]);
     setInput(""); // Clear the input field
     setIsLoading(true);
-    await requestChatCompletion()
+    await Promise.all([
+      requestLeftSideChatCompletion(),
+      requestRightSideChatCompletion(),
+    ]);
     setIsLoading(false);
-
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (isGenerating || isLoading || !input) return;
-      setIsGenerating(true);
+      if (isRightGenerating || isLoading || !input) return;
+      setIsRightGenerating(true);
+      setIsLeftGenerating(true);
       onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
     }
   };
@@ -224,13 +339,15 @@ export default function Home() {
   const handleActionClick = async (action: string, messageIndex: number) => {
     console.log("Action clicked:", action, "Message index:", messageIndex);
     if (action === "Refresh") {
-      setIsGenerating(true);
+      setIsRightGenerating(true);
+      setIsLeftGenerating(true);
       try {
         //await reload();
       } catch (error) {
         console.error("Error reloading:", error);
       } finally {
-        setIsGenerating(false);
+        setIsRightGenerating(false);
+        setIsLeftGenerating(false);
       }
     }
 
@@ -284,12 +401,15 @@ export default function Home() {
               </div>
 
               <ChatMessageList ref={messagesRef} className="h-full overflow-y-auto">
-                {messages.map((message, index) => (
+                {leftMessages.map((message, index) => (
                     <ChatBubble
                         key={index}
                         variant={message.role === "user" ? "sent" : "received"}
                     >
-                      <ChatBubbleAvatar src="" fallback={message.role === "user" ? "👨🏽" : "🤖"} />
+                      <ChatBubbleAvatar
+                          src=""
+                          fallback={message.role === "user" ? "👨🏽" : "🤖"}
+                      />
                       <ChatBubbleMessage>
                         {message.content.split("```").map((part, partIndex) => {
                           if (partIndex % 2 === 0) {
@@ -300,7 +420,10 @@ export default function Home() {
                             );
                           } else {
                             return (
-                                <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
+                                <pre
+                                    className="whitespace-pre-wrap pt-2"
+                                    key={partIndex}
+                                >
                           <CodeDisplayBlock code={part} lang="" />
                         </pre>
                             );
@@ -309,9 +432,12 @@ export default function Home() {
 
                         {message.role === "assistant" && (
                             <div className="mt-2 flex flex-col gap-1">
-                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
-                                  <div key={sourceIndex} className="flex items-center gap-2">
-                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                              {message.sources?.map((source, sourceIndex) => (
+                                  <div
+                                      key={sourceIndex}
+                                      className="flex items-center gap-2"
+                                  >
+                                    <Pin style={{ width: "16px", height: "16px" }} />{" "}
                                     <a
                                         href={source.url}
                                         target="_blank"
@@ -327,7 +453,7 @@ export default function Home() {
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}
-                {isGenerating && (
+                {isLeftGenerating && (
                     <ChatBubble variant="received">
                       <ChatBubbleAvatar src="" fallback="🤖" />
                       <ChatBubbleMessage isLoading />
@@ -339,7 +465,7 @@ export default function Home() {
             {/* Divider */}
             <div className="w-0.5 bg-black"></div>
 
-            {/* Right Side Chat Messages (Duplicate View) */}
+            {/* Right Side Chat Messages */}
             <div className="flex-1 p-4 overflow-hidden">
               <div className="flex gap-4 mb-4">
                 {/* State Dropdown */}
@@ -370,12 +496,15 @@ export default function Home() {
               </div>
 
               <ChatMessageList ref={messagesRef} className="h-full overflow-y-auto">
-                {messages.map((message, index) => (
+                {rightMessages.map((message, index) => ( // Now correctly uses rightMessages
                     <ChatBubble
                         key={`duplicate-${index}`}
                         variant={message.role === "user" ? "sent" : "received"}
                     >
-                      <ChatBubbleAvatar src="" fallback={message.role === "user" ? "👨🏽" : "🤖"} />
+                      <ChatBubbleAvatar
+                          src=""
+                          fallback={message.role === "user" ? "👨🏽" : "🤖"}
+                      />
                       <ChatBubbleMessage>
                         {message.content.split("```").map((part, partIndex) => {
                           if (partIndex % 2 === 0) {
@@ -387,32 +516,34 @@ export default function Home() {
                           } else {
                             return (
                                 <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
-                          <CodeDisplayBlock code={part} lang="" />
-                        </pre>
+                <CodeDisplayBlock code={part} lang="" />
+              </pre>
                             );
                           }
                         })}
+
                         {message.role === "assistant" && (
                             <div className="mt-2 flex flex-col gap-1">
-                              {!isGenerating && message.sources?.map((source, sourceIndex) => (
-                                  <div key={sourceIndex} className="flex items-center gap-2">
-                                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
-                                    <a
-                                        href={source.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 underline"
-                                    >
-                                      {source.label}
-                                    </a>
-                                  </div>
-                              ))}
+                              {!isRightGenerating &&
+                                  message.sources?.map((source, sourceIndex) => (
+                                      <div key={sourceIndex} className="flex items-center gap-2">
+                                        <Pin style={{ width: "16px", height: "16px" }} />
+                                        <a
+                                            href={source.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 underline"
+                                        >
+                                          {source.label}
+                                        </a>
+                                      </div>
+                                  ))}
                             </div>
                         )}
                       </ChatBubbleMessage>
                     </ChatBubble>
                 ))}
-                {isGenerating && (
+                {isRightGenerating && (
                     <ChatBubble variant="received">
                       <ChatBubbleAvatar src="" fallback="🤖" />
                       <ChatBubbleMessage isLoading />
@@ -461,6 +592,5 @@ export default function Home() {
           </div>
         </main>
       </div>
-  );
-
+);
 }

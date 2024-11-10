@@ -2,7 +2,6 @@
 
 import {
   ChatBubble,
-  ChatBubbleAction,
   ChatBubbleAvatar,
   ChatBubbleMessage,
 } from "@/components/ui/chat/chat-bubble";
@@ -10,31 +9,22 @@ import { ChatInput } from "@/components/ui/chat/chat-input";
 import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
 import { Button } from "@/components/ui/button";
 import {
-  CopyIcon,
   CornerDownLeft,
   Mic,
   Paperclip,
-  RefreshCcw,
-  Volume2,
+  Pin,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeDisplayBlock from "@/components/code-display-block";
 
-const ChatAiIcons = [
-  {
-    icon: CopyIcon,
-    label: "Copy",
-  },
-  {
-    icon: RefreshCcw,
-    label: "Refresh",
-  },
-  {
-    icon: Volume2,
-    label: "Volume",
-  },
+const SAMPLE_SOURCES = [
+  { url: "https://example.com/doc1", label: "Building Code 2024" },
+  { url: "https://example.com/doc2", label: "Safety Guidelines" },
+  { url: "https://example.com/doc3", label: "Permit Requirements" },
+  { url: "https://example.com/doc4", label: "Construction Standards" },
+  { url: "https://example.com/doc5", label: "Zoning Laws" },
 ];
 
 type Message = {
@@ -42,6 +32,7 @@ type Message = {
   role: "user" | "assistant"; // Specifies who sent the message
   content: string; // The actual text of the message
   timestamp?: Date; // Optional timestamp for when the message was sent
+  sources?: { url: string; label: string }[]; // List of sources with labels
 };
 
 export default function Home() {
@@ -62,6 +53,16 @@ export default function Home() {
     setInput(e.target.value);
   };
 
+  const handleSourceClick = (url: string) => {
+    window.open(url, "_blank"); // Open link in a new tab
+  };
+
+  const getRandomSources = () => {
+    const numberOfSources = Math.floor(Math.random() * 3) + 1; // Random number between 1-3
+    const shuffled = [...SAMPLE_SOURCES].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, numberOfSources);
+  };
+
   const requestChatCompletion = async () => {
     // Initialize an empty assistant message to render streaming response
     const assistantMessage: Message = {
@@ -69,6 +70,7 @@ export default function Home() {
       role: "assistant",
       content: "",
       timestamp: new Date(),
+      sources: getRandomSources(), // Add this line
     };
 
     try {
@@ -183,12 +185,16 @@ export default function Home() {
         navigator.clipboard.writeText(message.content);
       }
     }
+    if (action === "Source") {
+      // Replace this URL with the source link you want to redirect to
+      const sourceUrl = "https://example.com/source-url";
+      window.open(sourceUrl, "_blank"); // Open link in a new tab
+    }
   };
 
   return (
     <main className="flex h-screen w-full max-w-3xl flex-col items-center mx-auto py-6">
       <ChatMessageList ref={messagesRef}>
-        {/* Initial Message */}
         {messages.length === 0 && (
           <div className="w-full bg-background shadow-sm border rounded-lg p-8 flex flex-col gap-2">
             <h1 className="font-bold">Welcome to the CompLlama</h1>
@@ -198,65 +204,53 @@ export default function Home() {
           </div>
         )}
 
-        {/* Messages */}
-        {messages &&
-          messages.map((message, index) => (
-            <ChatBubble
-              key={index}
-              variant={message.role == "user" ? "sent" : "received"}
-            >
-              <ChatBubbleAvatar
-                src=""
-                fallback={message.role == "user" ? "👨🏽" : "🤖"}
-              />
-              <ChatBubbleMessage
-              >
-                {message.content
-                  .split("```")
-                  .map((part: string, index: number) => {
-                    if (index % 2 === 0) {
-                      return (
-                        <Markdown key={index} remarkPlugins={[remarkGfm]}>
-                          {part}
-                        </Markdown>
-                      );
-                    } else {
-                      return (
-                        <pre className="whitespace-pre-wrap pt-2" key={index}>
-                          <CodeDisplayBlock code={part} lang="" />
-                        </pre>
-                      );
-                    }
-                  })}
+        {messages.map((message, index) => (
+          <ChatBubble
+            key={index}
+            variant={message.role == "user" ? "sent" : "received"}
+          >
+            <ChatBubbleAvatar
+              src=""
+              fallback={message.role == "user" ? "👨🏽" : "🤖"}
+            />
+            <ChatBubbleMessage>
+              {message.content.split("```").map((part: string, partIndex: number) => {
+                if (partIndex % 2 === 0) {
+                  return (
+                    <Markdown key={partIndex} remarkPlugins={[remarkGfm]}>
+                      {part}
+                    </Markdown>
+                  );
+                } else {
+                  return (
+                    <pre className="whitespace-pre-wrap pt-2" key={partIndex}>
+                      <CodeDisplayBlock code={part} lang="" />
+                    </pre>
+                  );
+                }
+              })}
 
-                {message.role === "assistant" &&
-                  messages.length - 1 === index && (
-                    <div className="flex items-center mt-1.5 gap-1">
-                      {!isGenerating && (
-                        <>
-                          {ChatAiIcons.map((icon, iconIndex) => {
-                            const Icon = icon.icon;
-                            return (
-                              <ChatBubbleAction
-                                variant="outline"
-                                className="size-5"
-                                key={iconIndex}
-                                icon={<Icon className="size-3" />}
-                                onClick={() =>
-                                  handleActionClick(icon.label, index)
-                                }
-                              />
-                            );
-                          })}
-                        </>
-                      )}
-                    </div>
-                  )}
-              </ChatBubbleMessage>
-            </ChatBubble>
-          ))}
+            {message.role === "assistant" && (
+              <div className="mt-2 flex flex-col gap-1">
+                {!isGenerating && message.sources?.map((source, sourceIndex) => (
+                  <div key={sourceIndex} className="flex items-center gap-2">
+                    <Pin style={{ width: "16px", height: "16px" }} /> {/* Pin icon */}
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 underline"
+                    >
+                      {source.label}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+            </ChatBubbleMessage>
+          </ChatBubble>
+        ))}
 
-        {/* Loading */}
         {isGenerating && (
           <ChatBubble variant="received">
             <ChatBubbleAvatar src="" fallback="🤖" />

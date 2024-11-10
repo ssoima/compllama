@@ -127,10 +127,13 @@ export default function Home() {
     window.open(url, "_blank"); // Open link in a new tab
   };
 
-  const getRandomSources = () => {
+  const getRandomSources = (city: string) => {
     const numberOfSources = Math.floor(Math.random() * 3) + 1; // Random number between 1-3
     const shuffled = [...SAMPLE_SOURCES].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, numberOfSources);
+    return shuffled.slice(0, numberOfSources).map(source => ({
+      ...source,
+      label: `${source.label} - ${city}`, // Append the passed city to the label
+    }));
   };
 
   const requestLeftSideChatCompletion = async () => {
@@ -146,7 +149,7 @@ export default function Home() {
       role: "assistant",
       content: "",
       timestamp: new Date(),
-      sources: getRandomSources(), // Add this line
+      sources: getRandomSources(leftSelectedCity), // Add this line
     };
 
     try {
@@ -231,7 +234,7 @@ export default function Home() {
       role: "assistant",
       content: "",
       timestamp: new Date(),
-      sources: getRandomSources(), // Add this line
+      sources: getRandomSources(rightSelectedCity), // Add this line
     };
 
     try {

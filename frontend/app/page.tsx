@@ -94,7 +94,10 @@ export default function Home() {
   const getRandomSources = () => {
     const numberOfSources = Math.floor(Math.random() * 3) + 1; // Random number between 1-3
     const shuffled = [...SAMPLE_SOURCES].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, numberOfSources);
+    return shuffled.slice(0, numberOfSources).map(source => ({
+      ...source,
+      label: `${source.label} - ${selectedCity}`, // Append selected city to the label
+    }));
   };
 
   const requestChatCompletion = async () => {

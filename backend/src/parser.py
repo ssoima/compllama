@@ -41,9 +41,10 @@ def extract_ordinance_metadata(excel_path):
                             'title': current_title + ', ' + current_title_subtitle,
                             'chapter': current_chapter + ', ' + current_chapter_subtitle,
                             'section': curr_t,
-                            'state': curr_url.split('/')[2],
-                            'city': curr_url.split('/')[3],
-                            'subtitle': curr_subt
+                            'state': curr_url.split('/')[3],
+                            'city': curr_url.split('/')[4],
+                            'subtitle': curr_subt,
+                            'url': curr_url
                         },
                         'content': str(row.get('Content', '')).strip()
                     }

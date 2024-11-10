@@ -1,25 +1,45 @@
 # ordinance_db.py
 from typing import List, Dict
 import uuid
+import os
+from dotenv import load_dotenv
 from db import ChromaDb
 from embeddings import TogetherEmbeddingFunction
 from parser import extract_ordinance_metadata
 
+# Load environment variables from .env file
+load_dotenv()
+
 class OrdinanceDBWithTogether(ChromaDb):
     def __init__(
         self,
-        api_key: str,
+        api_key: str = os.getenv('TOGETHER_API_KEY'),
         model_name: str = "togethercomputer/m2-bert-80M-32k-retrieval",
         collection_name: str = "ordinances",
         batch_size: int = 32
     ):
+        if not api_key:
+            raise ValueError("TOGETHER_API_KEY environment variable is not set")
+            
         embedding_function = TogetherEmbeddingFunction(
             api_key=api_key,
             model_name=model_name,
             batch_size=batch_size
         )
         super().__init__(embedding_function=embedding_function)
-        self.collection = self.create_or_get_collection(collection_name)
+        
+        # Delete existing collection if it exists
+        try:
+            self.client.delete_collection(collection_name)
+        except Exception:
+            pass
+            
+        # Create new collection with proper settings
+        self.collection = self.client.create_collection(
+            name=collection_name,
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "cosine"}
+        )
         self.name = collection_name
     
     def add_ordinances(self, ordinances: List[Dict]):
@@ -38,11 +58,17 @@ class OrdinanceDBWithTogether(ChromaDb):
         # Add documents in batches
         batch_size = 100
         for i in range(0, len(documents), batch_size):
-            self.collection.add(
-                documents=documents[i:i+batch_size],
-                metadatas=metadatas[i:i+batch_size],
-                ids=ids[i:i+batch_size]
-            )
+            batch_end = min(i + batch_size, len(documents))
+            try:
+                self.collection.add(
+                    documents=documents[i:batch_end],
+                    metadatas=metadatas[i:batch_end],
+                    ids=ids[i:batch_end]
+                )
+                print(f"Added batch {i//batch_size + 1} of {(len(documents)-1)//batch_size + 1}")
+            except Exception as e:
+                print(f"Error adding batch {i//batch_size + 1}: {str(e)}")
+                raise
     
     def _format_document(self, ordinance: Dict) -> str:
         """Format ordinance for search by combining metadata and content"""
@@ -88,28 +114,32 @@ Content:
             })
             
         return formatted_results
-    
+
     @classmethod
     def from_excel(cls, excel_path: str, api_key: str, **kwargs):
         """Create OrdinanceDB instance from Excel file"""
+        print(f"Parsing Excel file: {excel_path}")
         ordinances = extract_ordinance_metadata(excel_path)
         if not ordinances:
             raise ValueError("Failed to parse ordinances from Excel file")
         
+        print(f"Creating database instance...")
         db = cls(api_key=api_key, **kwargs)
+        
+        print(f"Adding {len(ordinances)} ordinances to database...")
         db.add_ordinances(ordinances)
+        
         return db
 
 def main():
-    # Example usage
-    TOGETHER_API_KEY = "c18c227d834619786cb5509a5ef931838e727bbb6211ad446b144e6d5eed2c52"
     EXCEL_PATH = "../data/CaliforniaCityCACodeofOrdinancesEXPORT20220511.xlsx"
     
     try:
-        # Create DB directly from Excel
+        # Create DB directly from Excel using API key from environment
+        print("Creating database and adding ordinances...")
         db = OrdinanceDBWithTogether.from_excel(
             excel_path=EXCEL_PATH,
-            api_key=TOGETHER_API_KEY,
+            api_key=os.getenv('TOGETHER_API_KEY'),
             collection_name="california_city_ordinances"
         )
         
@@ -131,6 +161,7 @@ def main():
             
     except Exception as e:
         print(f"Error: {str(e)}")
+        raise
 
 if __name__ == "__main__":
     main()

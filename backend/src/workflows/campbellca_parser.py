@@ -4,7 +4,7 @@ from restack_ai.workflow import workflow, import_functions
 
 with import_functions():
     from src.functions.crawl.crawl_campbellca import crawl_campbellca
-    from src.functions.crawl.store_campbell_to_db import store_campbellca_to_db, StoreCampbellToDbInputParams
+    from src.functions.crawl.store_campbellca_to_db import store_campbellca_to_db, StoreCampbellToDbInputParams
 
 
 @workflow.defn(name="campbellca_parser")

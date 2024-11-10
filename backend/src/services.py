@@ -7,7 +7,7 @@ from src.workflows.campbellca_parser import campbellca_parser
 from src.workflows.municode_parser import municode_parser
 from src.workflows.workflow import hn_workflow
 from src.functions.crawl.crawl_campbellca import crawl_campbellca
-from src.functions.crawl.store_campbell_to_db import store_campbellca_to_db
+from src.functions.crawl.store_campbellca_to_db import store_campbellca_to_db
 from restack_ai.restack import ServiceOptions
 
 async def main():

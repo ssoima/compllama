@@ -83,4 +83,16 @@ curl -X POST \
   -d '{"query": "AI", "count": 5}'
 ```
 
+11. Install llama stack
+
+```
+llama stack build --template together
+```
+
 This will schedule the workflow and return the result.
+
+12. Run llama stack
+```
+llama stack run /Users/ssoima/.llama/distributions/llamastack-together/together-run.yaml --port 5050
+
+```

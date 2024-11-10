@@ -19,6 +19,7 @@ uvicorn = "^0.32.0"
 python-dotenv = "0.19"
 streamlit = "^1.40.0"
 requests = "^2.32.3"
+chromadb = "^0.5.18"
 
 [build-system]
 requires = ["poetry-core"]

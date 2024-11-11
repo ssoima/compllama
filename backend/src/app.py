@@ -160,6 +160,50 @@ async def run_parser():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.post("/api/run_campbellca_parser")
+async def run_parser():
+    try:
+        client = Restack()
+        workflow_id = f"{int(time.time() * 1000)}-llm_complete_workflow"
+
+        runId = await client.schedule_workflow(
+            workflow_name="campbellca_parser",
+            workflow_id=workflow_id,
+        )
+        print("Scheduled workflow", runId)
+
+        result = await client.get_workflow_result(
+            workflow_id=workflow_id,
+            run_id=runId
+        )
+
+        return {
+            "result": result,
+            "workflow_id": workflow_id,
+            "run_id": runId
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+
+@app.post("/api/schedule")
+async def schedule_workflow(request: QueryRequest):
+    try:
+        response = client.inference.chat_completion(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Write a two-sentence poem about llama."}
+            ],
+            model="Llama3.2-90B-Vision-Instruct",
+        )
+
+        return {
+            "result": response.completion_message.content
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 # Remove Flask-specific run code since FastAPI uses uvicorn
 def run_app():
     uvicorn.run("src.app:app", host="0.0.0.0", port=8000, reload=True)

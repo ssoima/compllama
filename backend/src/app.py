@@ -1,5 +1,6 @@
 import json
 import asyncio
+from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +10,16 @@ import time
 from restack_ai import Restack
 import uvicorn
 from llama_stack_client.lib.inference.event_logger import EventLogger
+from .data_ingestion import init_database  
+from llama_stack_client import LlamaStackClient
+from .ordinance_db import OrdinanceDBWithTogether
+from .rag import OrdinanceRAG
+import json
+import os
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
 
 # Define request model
 class QueryRequest(BaseModel):
@@ -18,6 +28,22 @@ class QueryRequest(BaseModel):
 
 app = FastAPI()
 client = LlamaStackClient(base_url="http://localhost:5050")
+db = init_database(
+        collection_name="combined_ordinances"
+)
+
+# Initialize RAG system
+rag = OrdinanceRAG(
+    ordinance_db=db,
+    llama_client=client
+)
+
+class OrdinanceQuery(BaseModel):
+    query: str
+    state: Optional[str] = None
+    city: Optional[str] = None
+    filter_conditions: Optional[dict] = None
+    stream: Optional[bool] = False
 
 
 # Add CORS middleware
@@ -41,6 +67,7 @@ class ChatRequest(BaseModel):
 @app.post("/chat")
 async def chat(request: ChatRequest):
     user_message = request.message
+    # TODO: Do request to RAG
 
     # Use the provided LlamaStack client code snippet
     response = client.inference.chat_completion(
@@ -60,6 +87,53 @@ async def chat(request: ChatRequest):
     # Return the StreamingResponse using the async generator
     return StreamingResponse(event_generator(), media_type="application/json")
 
+@app.post("/query")
+async def query_ordinances(request: OrdinanceQuery):
+    try:
+        if request.stream:
+            # Return streaming response
+            async def generate():
+                result = await rag.aquery(
+                    query_str=request.query,
+                    state=request.state,
+                    city=request.city,
+                    filter_conditions=request.filter_conditions,
+                    stream=True
+                )
+               
+                # First yield the sources
+                yield json.dumps({
+                    "type": "sources",
+                    "content": result["sources"]
+                }) + "\n"
+               
+                # Then yield the content chunks
+                async for chunk in result["generator"]:
+                    yield json.dumps({
+                        "type": "content",
+                        "content": chunk
+                    }) + "\n"
+           
+            return StreamingResponse(
+                generate(),
+                media_type="application/json"
+            )
+        else:
+            # Return regular response with sources
+            result = await rag.aquery(
+                query_str=request.query,
+                state=request.state,
+                city=request.city,
+                filter_conditions=request.filter_conditions,
+                stream=False
+            )
+            return {
+                "response": result["answer"],
+                "sources": result["sources"]
+            }
+           
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/run_parser")
 async def run_parser():

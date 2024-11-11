@@ -16,11 +16,11 @@ import CodeDisplayBlock from "@/components/code-display-block";
 import Navbar from "@/components/ui/navbar";
 
 const SAMPLE_SOURCES = [
-  { url: "https://example.com/doc1", label: "Building Code 2024" },
-  { url: "https://example.com/doc2", label: "Safety Guidelines" },
-  { url: "https://example.com/doc3", label: "Permit Requirements" },
-  { url: "https://example.com/doc4", label: "Construction Standards" },
-  { url: "https://example.com/doc5", label: "Zoning Laws" },
+  { url: "https://library.municode.com/CA/California_City/codes/Code_of_Ordinances?nodeId=COOR_TIT8BURE_CH12SMRESOENSYPE_S8-12.03AP", label: "Building Code 2024" },
+  { url: "https://library.municode.com/CA/California_City/codes/Code_of_Ordinances?nodeId=COOR_TIT8BURE_CH12SMRESOENSYPE_S8-12.02DE2", label: "Safety Guidelines" },
+  { url: "https://library.municode.com/CA/California_City/codes/Code_of_Ordinances?nodeId=COOR_TIT9LAUSDE_CH2ZO_ART6RMIREDIMEWDE_S9-2.601PEUS", label: "Permit Requirements" },
+  { url: "https://library.municode.com/CA/California_City/codes/Code_of_Ordinances?nodeId=COOR_TIT8BURE_CH5SWPOPOCADI_S8-5.04COST", label: "Construction Standards" },
+  { url: "https://library.municode.com/CA/California_City/codes/Code_of_Ordinances?nodeId=COOR_TIT9LAUSDE_CH3LADI_ART4RE_S9-3.403DEPAREPU", label: "Zoning Laws" },
 ];
 
 type Message = {
@@ -238,17 +238,17 @@ export default function Home() {
     };
 
     try {
+      console.log("print meeeee")
       // Stream response from the backend on port 8000
-      //add here rightSelectedCity
       const rightRegulatory = `Give me a regulatory city regulatory building construction for ${rightSelectedCity} for this question: ${input}`;
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch("http://localhost:8000/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: rightRegulatory }),
       });
 
       if (!response.body) throw new Error("No response body");
-
+      console.log("responseeee",response.body)
       // ReadableStream to handle streaming response
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -256,6 +256,8 @@ export default function Home() {
       let newContent = "";
       setRightMessages((prevMessages) => [...prevMessages, assistantMessage]);
 
+
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
       // Process each chunk from the response
       while (true) {
         const { done, value } = await reader.read();

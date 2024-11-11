@@ -94,7 +94,10 @@ export default function Home() {
   const getRandomSources = () => {
     const numberOfSources = Math.floor(Math.random() * 3) + 1; // Random number between 1-3
     const shuffled = [...SAMPLE_SOURCES].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, numberOfSources);
+    return shuffled.slice(0, numberOfSources).map(source => ({
+      ...source,
+      label: `${source.label} - ${selectedCity}`, // Append selected city to the label
+    }));
   };
 
   const requestChatCompletion = async () => {
@@ -115,11 +118,11 @@ export default function Home() {
 
 
     try {
-      // Stream response from the backend on port 8000
+      const regulatory = `Give me a regulatory city regulatory building construction for ${selectedCity} for this question: ${input}`;
       const response = await fetch("http://localhost:8000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: regulatory }),
       });
 
       if (!response.body) throw new Error("No response body");

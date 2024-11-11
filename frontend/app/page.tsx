@@ -39,7 +39,14 @@ type Message = {
 const states = ["California", "Texas", "Florida", "Illinois", "Pennsylvania", "Ohio", "Georgia", "Michigan", "Virginia"];
 
 const cities = {
-  California: ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento"],
+  California: [
+    "Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento",
+    "Fresno", "Long Beach", "Oakland", "Bakersfield", "Anaheim",
+    "Santa Ana", "Riverside", "Stockton", "Irvine", "Chula Vista",
+    "Fremont", "San Bernardino", "Modesto", "Oxnard", "Fontana",
+    "Oceanside", "Rancho Cucamonga", "Santa Rosa", "Ontario", "Elk Grove",
+    "Fairfield", "El Monte", "Carlsbad", "Temecula", "Costa Mesa"
+  ],
   Texas: ["Houston", "Dallas", "Austin", "San Antonio", "Fort Worth"],
   Florida: ["Miami", "Orlando", "Tampa", "Jacksonville", "Tallahassee"],
   Illinois: ["Chicago", "Aurora", "Naperville", "Joliet", "Rockford"],

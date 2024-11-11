@@ -64,14 +64,13 @@ def extract_ordinance_metadata(excel_path):
         return ordinances
                 
     except Exception as e:
-        print(f"Error processing file: {str(e)}")
         return None
 
 def main():
     # Example usage
-    file_path = '../data/CaliforniaCityCACodeofOrdinancesEXPORT20220511.xlsx'
+    file_path = '/Users/lianasoima/Documents/compllama/backend/data/raw_files/AventuraFLCodeofOrdinancesEXPORT20240913.xlsx'
     results = extract_ordinance_metadata(file_path)
-    
+    print(results)
     if results:
         # Print first ordinance as example
         print("\nExample of first ordinance:")
